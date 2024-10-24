@@ -1,8 +1,14 @@
 package main
 
-import "fmt"
+import (
+	Book "firstProject/Book"
+	"firstProject/Generator"
+	"firstProject/Library"
+	"firstProject/Storage"
+	"fmt"
+)
 
-func printBook(book Book) {
+func printBook(book Book.Book) {
 	fmt.Println("Найденная книга: ")
 	fmt.Println("ID - ", book.ID)
 	fmt.Println("Название - ", book.Title)
@@ -14,15 +20,15 @@ func printBook(book Book) {
 }
 
 func main() {
-	books := []Book{
+	books := []Book.Book{
 		{Title: "Дело, которому ты служишь", Author: "Юрий Герман", CountPages: 420, Year: 1958},
 		{Title: "Повелитель мух", Author: "Уильям Голдинг", CountPages: 190, Year: 1954},
 		{Title: "451 градус по Фаренгейту", Author: "Рэй Бредбери", CountPages: 200, Year: 1953},
 	}
 
-	library := Library{
-		storage:     &StorageSlice{},
-		generatorId: FirstGeneratorId(),
+	library := Library.Library{
+		Storage:     &Storage.StorageSlice{},
+		GeneratorId: Generator.FirstGeneratorId(),
 	}
 
 	for _, book := range books {
@@ -43,7 +49,7 @@ func main() {
 		fmt.Println("Книга не найдена")
 	}
 
-	library.generatorId = SecondGeneratorId()
+	library.GeneratorId = Generator.SecondGeneratorId()
 	library = library.ReplaceGeneratorId()
 
 	bookThird, flag := library.GetBookByTitle("Повелитель мух")
@@ -53,7 +59,7 @@ func main() {
 		fmt.Println("Книга не найдена")
 	}
 
-	library.storage = &StorageMap{allBooks: make(map[int]Book)}
+	library.Storage = &Storage.StorageMap{AllBooks: make(map[int]Book.Book)}
 
 	for _, book := range books {
 		library.Add(book.Title, book.Author, book.CountPages, book.Year)
@@ -73,6 +79,3 @@ func main() {
 		fmt.Println("Книга не найдена")
 	}
 }
-
-//TIP See GoLand help at <a href="https://www.jetbrains.com/help/go/">jetbrains.com/help/go/</a>.
-// Also, you can try interactive lessons for GoLand by selecting 'Help | Learn IDE Features' from the main menu.
