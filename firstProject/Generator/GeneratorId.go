@@ -1,4 +1,4 @@
-package main
+package Generator
 
 func FirstGeneratorId() func() int {
 	id := 1000
