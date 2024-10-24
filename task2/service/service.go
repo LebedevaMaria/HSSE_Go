@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -28,7 +28,7 @@ const (
 )
 
 func GetVersion(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(fmt.Sprintf(`%s`, version)))
+	w.Write([]byte(version))
 }
 
 func PostDecode(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +61,7 @@ func GetHardOp(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
+func Main() {
 	const shutdownTimeout = 15 * time.Second
 	mux := http.NewServeMux()
 	mux.HandleFunc("/version", GetVersion)
