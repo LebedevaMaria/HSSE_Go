@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"bytes"
@@ -6,8 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"math/rand"
+	"io"
 	"net/http"
 	"time"
 )
@@ -20,46 +19,59 @@ type Output struct {
 	Output string `json:"output"`
 }
 
-func main() {
-	rand.Seed(time.Now().UnixNano())
+type Client struct {
+	Http string
+}
 
-	//GET version
-	resp, err := http.Get("http://localhost:8080/version")
+func (client Client) GetVersion() (string, error) {
+	resp, err := http.Get(client.Http + "/version")
 	if err != nil {
 		fmt.Printf("Failed to get version: %v", err)
 	}
 	defer resp.Body.Close()
-	ans, _ := ioutil.ReadAll(resp.Body)
-	fmt.Printf("%s\n", ans)
+	ans, _ := io.ReadAll(resp.Body)
+	return string(ans), nil
+}
 
-	//POST
-	input := Input{base64.StdEncoding.EncodeToString([]byte("Roachhh"))}
-	inputJSON, _ := json.Marshal(input)
-	resp, err = http.Post("http://localhost:8080/decode", "application/json", bytes.NewBuffer(inputJSON))
-	if err != nil {
-		fmt.Printf("Failed: %v", err)
+func (client Client) PostDecode(str string) (string, error) {
+	type Input struct {
+		Input string `json:"input"`
 	}
-	defer resp.Body.Close()
-	ans, _ = ioutil.ReadAll(resp.Body)
-	fmt.Printf("%s", ans)
 
-	//GET hard-op
+	type Output struct {
+		Output string `json:"output"`
+	}
+
+	input := Input{base64.StdEncoding.EncodeToString([]byte(str))}
+	inputJSON, _ := json.Marshal(input)
+	resp, err := http.Post(client.Http+"/decode", "application/json", bytes.NewBuffer(inputJSON))
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+	var ans Output
+	err = json.NewDecoder(resp.Body).Decode(&ans)
+	return ans.Output, nil
+}
+
+func (client Client) GetHardOp() (bool, int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:8080/hard-op", nil)
-	if err != nil {
-		fmt.Printf("Failed: %v", err)
-	}
-	resp, err = http.DefaultClient.Do(req)
+	req, err := http.NewRequestWithContext(ctx, "GET", client.Http+"/hard-op", nil)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			fmt.Println("Request timed out after 15 seconds")
+			return false, 0, nil
 		} else {
-			fmt.Println("Failed: %v", err)
+			return false, 0, err
 		}
-	} else {
-		defer resp.Body.Close()
-		ans, _ = ioutil.ReadAll(resp.Body)
-		fmt.Printf("%d", resp.StatusCode)
 	}
+	defer resp.Body.Close()
+	return true, resp.StatusCode, nil
+}
+
+func NewClient(Http string) Client {
+	current := Client{Http}
+	return current
 }
