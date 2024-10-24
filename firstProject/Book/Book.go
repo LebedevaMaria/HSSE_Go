@@ -1,4 +1,4 @@
-package main
+package Book
 
 type Book struct {
 	ID         int
